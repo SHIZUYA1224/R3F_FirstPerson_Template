@@ -28,7 +28,7 @@ export function FirstPersonWorld({ world }: { world: WorldManifest }) {
       data-testid="first-person-world"
       className="relative h-dvh w-full overflow-hidden bg-[#07090d]"
       onPointerDown={(event) => {
-        if (event.pointerType === "mouse") {
+        if (event.pointerType === "mouse" && event.button === 0) {
           requestPointerLock();
         }
       }}

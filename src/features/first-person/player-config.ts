@@ -10,7 +10,8 @@ export interface FirstPersonPlayerConfig {
   mouseSensitivity: number;
   gamepadLookScale: number;
   airControlMultiplier: number;
-  groundedVelocityEpsilon: number;
+  groundProbeDistance: number;
+  minGroundNormalY: number;
   linearDamping: number;
 }
 
@@ -26,6 +27,18 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   mouseSensitivity: 0.0025,
   gamepadLookScale: 18,
   airControlMultiplier: 0.35,
-  groundedVelocityEpsilon: 0.08,
+  groundProbeDistance: 0.18,
+  minGroundNormalY: 0.55,
   linearDamping: 0.8,
 };
+
+export function getGroundProbeLength(config: FirstPersonPlayerConfig) {
+  return config.capsuleHalfHeight + config.capsuleRadius + config.groundProbeDistance;
+}
+
+export function isWalkableGroundNormal(
+  normal: { y: number } | null | undefined,
+  config: FirstPersonPlayerConfig,
+) {
+  return Boolean(normal && normal.y >= config.minGroundNormalY);
+}

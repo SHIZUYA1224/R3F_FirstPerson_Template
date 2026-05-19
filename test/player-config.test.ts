@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { defaultFirstPersonPlayerConfig } from "@/features/first-person/player-config";
+import {
+  defaultFirstPersonPlayerConfig,
+  getGroundProbeLength,
+  isWalkableGroundNormal,
+} from "@/features/first-person/player-config";
 
 describe("first person player defaults", () => {
   it("uses grounded walking defaults", () => {
@@ -10,5 +14,21 @@ describe("first person player defaults", () => {
       defaultFirstPersonPlayerConfig.walkSpeed,
     );
     expect(defaultFirstPersonPlayerConfig.capsuleRadius).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.groundProbeDistance).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.minGroundNormalY).toBeGreaterThan(0);
+  });
+
+  it("uses capsule size plus skin distance for ground checks", () => {
+    expect(getGroundProbeLength(defaultFirstPersonPlayerConfig)).toBeCloseTo(
+      defaultFirstPersonPlayerConfig.capsuleHalfHeight +
+        defaultFirstPersonPlayerConfig.capsuleRadius +
+        defaultFirstPersonPlayerConfig.groundProbeDistance,
+    );
+  });
+
+  it("rejects steep or missing ground normals", () => {
+    expect(isWalkableGroundNormal({ y: 1 }, defaultFirstPersonPlayerConfig)).toBe(true);
+    expect(isWalkableGroundNormal({ y: 0.2 }, defaultFirstPersonPlayerConfig)).toBe(false);
+    expect(isWalkableGroundNormal(null, defaultFirstPersonPlayerConfig)).toBe(false);
   });
 });

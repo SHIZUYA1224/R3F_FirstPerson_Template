@@ -1,18 +1,27 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { CapsuleCollider, RigidBody, type RapierRigidBody } from "@react-three/rapier";
+import {
+  CapsuleCollider,
+  RigidBody,
+  useRapier,
+  type RapierRigidBody,
+} from "@react-three/rapier";
 import { useRef } from "react";
 import { MathUtils, Vector3 } from "three";
 import { useInputStore } from "@/features/first-person/input-store";
 import {
   defaultFirstPersonPlayerConfig,
+  getGroundProbeLength,
+  isWalkableGroundNormal,
   type FirstPersonPlayerConfig,
 } from "@/features/first-person/player-config";
 import type { WorldManifest } from "@/features/worlds/world-manifest";
 
 const direction = new Vector3();
 const rotatedDirection = new Vector3();
+const upAxis = new Vector3(0, 1, 0);
+const downRayDirection = { x: 0, y: -1, z: 0 };
 
 export function PlayerController({
   world,
@@ -25,6 +34,7 @@ export function PlayerController({
   const yaw = useRef(world.spawn.yaw ?? 0);
   const pitch = useRef(world.spawn.pitch ?? 0);
   const { camera } = useThree();
+  const { rapier, world: physicsWorld } = useRapier();
 
   useFrame(() => {
     const body = bodyRef.current;
@@ -42,7 +52,17 @@ export function PlayerController({
     );
 
     const velocity = body.linvel();
-    const grounded = Math.abs(velocity.y) <= config.groundedVelocityEpsilon;
+    const translation = body.translation();
+    const groundHit = physicsWorld.castRayAndGetNormal(
+      new rapier.Ray(translation, downRayDirection),
+      getGroundProbeLength(config),
+      true,
+      undefined,
+      undefined,
+      undefined,
+      body,
+    );
+    const grounded = isWalkableGroundNormal(groundHit?.normal, config);
     const speed = input.sprint ? config.runSpeed : config.walkSpeed;
     const control = grounded ? 1 : config.airControlMultiplier;
 
@@ -52,7 +72,7 @@ export function PlayerController({
     }
     rotatedDirection
       .copy(direction)
-      .applyAxisAngle(new Vector3(0, 1, 0), yaw.current)
+      .applyAxisAngle(upAxis, yaw.current)
       .multiplyScalar(speed * control);
 
     const nextY = input.jump && grounded ? config.jumpVelocity : velocity.y;
@@ -65,7 +85,6 @@ export function PlayerController({
       true,
     );
 
-    const translation = body.translation();
     camera.position.set(
       translation.x,
       translation.y + config.cameraYOffset,

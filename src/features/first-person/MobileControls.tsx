@@ -8,6 +8,7 @@ const joystickRadius = 48;
 
 export function MobileControls() {
   const joystickRef = useRef<HTMLDivElement>(null);
+  const joystickPointer = useRef<number | null>(null);
   const lookPointer = useRef<{ id: number; x: number; y: number } | null>(null);
   const [knob, setKnob] = useState<[number, number]>([0, 0]);
 
@@ -30,7 +31,12 @@ export function MobileControls() {
     useInputStore.getState().setTouchMove([x / joystickRadius, -y / joystickRadius]);
   }
 
-  function releaseJoystick() {
+  function releaseJoystick(event: PointerEvent<HTMLDivElement>) {
+    if (joystickPointer.current !== event.pointerId) {
+      return;
+    }
+
+    joystickPointer.current = null;
     setKnob([0, 0]);
     useInputStore.getState().setTouchMove([0, 0]);
   }
@@ -86,10 +92,19 @@ export function MobileControls() {
         data-testid="mobile-joystick"
         className="pointer-events-auto absolute bottom-8 left-8 h-32 w-32 touch-none rounded-full border border-white/20 bg-black/30 shadow-[0_12px_40px_rgba(0,0,0,0.28)] backdrop-blur"
         onPointerDown={(event) => {
+          if (joystickPointer.current !== null) {
+            return;
+          }
+
+          joystickPointer.current = event.pointerId;
           event.currentTarget.setPointerCapture?.(event.pointerId);
           updateJoystick(event);
         }}
-        onPointerMove={updateJoystick}
+        onPointerMove={(event) => {
+          if (joystickPointer.current === event.pointerId) {
+            updateJoystick(event);
+          }
+        }}
         onPointerCancel={releaseJoystick}
         onPointerUp={releaseJoystick}
       >
