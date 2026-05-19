@@ -14,18 +14,14 @@ export function useGamepadControls() {
 
     const poll = () => {
       const gamepad = navigator.getGamepads?.().find((pad) => pad?.connected) ?? null;
-      const actions = mapGamepadState(gamepad);
+      const actions = mapGamepadState(
+        gamepad,
+        undefined,
+        defaultFirstPersonPlayerConfig.gamepadLookResponseCurve,
+      );
 
       useInputStore.getState().setGamepadActions(
-        actions.source === "gamepad"
-          ? {
-              ...actions,
-              look: [
-                actions.look[0] * defaultFirstPersonPlayerConfig.gamepadLookScale,
-                actions.look[1] * defaultFirstPersonPlayerConfig.gamepadLookScale,
-              ],
-            }
-          : emptyInputActions,
+        actions.source === "gamepad" ? actions : emptyInputActions,
       );
 
       frame = requestAnimationFrame(poll);

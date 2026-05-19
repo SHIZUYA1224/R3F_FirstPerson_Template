@@ -13,6 +13,8 @@ export function MobileControls() {
   const [knob, setKnob] = useState<[number, number]>([0, 0]);
 
   function updateJoystick(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+
     const bounds = joystickRef.current?.getBoundingClientRect();
     if (!bounds) {
       return;
@@ -32,6 +34,8 @@ export function MobileControls() {
   }
 
   function releaseJoystick(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+
     if (joystickPointer.current !== event.pointerId) {
       return;
     }
@@ -42,6 +46,11 @@ export function MobileControls() {
   }
 
   function startLook(event: PointerEvent<HTMLDivElement>) {
+    if (lookPointer.current !== null) {
+      return;
+    }
+
+    event.preventDefault();
     lookPointer.current = {
       id: event.pointerId,
       x: event.clientX,
@@ -56,6 +65,7 @@ export function MobileControls() {
       return;
     }
 
+    event.preventDefault();
     useInputStore
       .getState()
       .queueLookDelta(event.clientX - active.x, event.clientY - active.y, "touch");
@@ -67,6 +77,8 @@ export function MobileControls() {
   }
 
   function releaseLook(event: PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+
     if (lookPointer.current?.id === event.pointerId) {
       lookPointer.current = null;
     }
@@ -80,7 +92,7 @@ export function MobileControls() {
       <div
         aria-label="Look area"
         data-testid="mobile-look-zone"
-        className="pointer-events-auto absolute bottom-0 right-0 top-16 w-1/2 touch-none"
+        className="pointer-events-auto absolute bottom-0 left-36 right-0 top-16 touch-none"
         onPointerDown={startLook}
         onPointerMove={updateLook}
         onPointerCancel={releaseLook}

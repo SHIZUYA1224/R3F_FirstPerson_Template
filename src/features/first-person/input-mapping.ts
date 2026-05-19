@@ -42,7 +42,17 @@ export function normalizeMove(move: MoveVector): [number, number] {
 }
 
 export function applyDeadzone(value: number, deadzone = 0.16) {
-  return Math.abs(value) < deadzone ? 0 : value;
+  const magnitude = Math.abs(value);
+
+  if (magnitude < deadzone) {
+    return 0;
+  }
+
+  return Math.sign(value) * Math.min(1, (magnitude - deadzone) / (1 - deadzone));
+}
+
+export function applyResponseCurve(value: number, curve = 1) {
+  return Math.sign(value) * Math.abs(value) ** curve;
 }
 
 export function mapKeyboardState(keys: ReadonlySet<string>): InputActions {
@@ -86,6 +96,7 @@ export function mapTouchState(state: TouchState): InputActions {
 export function mapGamepadState(
   gamepad: GamepadLike | null | undefined,
   deadzone = 0.16,
+  lookResponseCurve = 1.45,
 ): InputActions {
   if (!gamepad) {
     return emptyInputActions;
@@ -96,8 +107,8 @@ export function mapGamepadState(
     -applyDeadzone(gamepad.axes[1] ?? 0, deadzone),
   ]);
   const look: [number, number] = [
-    applyDeadzone(gamepad.axes[2] ?? 0, deadzone),
-    applyDeadzone(gamepad.axes[3] ?? 0, deadzone),
+    applyResponseCurve(applyDeadzone(gamepad.axes[2] ?? 0, deadzone), lookResponseCurve),
+    applyResponseCurve(applyDeadzone(gamepad.axes[3] ?? 0, deadzone), lookResponseCurve),
   ];
   const jump = isPressed(gamepad.buttons[0]);
   const sprint =

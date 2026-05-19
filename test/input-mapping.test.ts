@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyDeadzone,
+  applyResponseCurve,
   mapGamepadState,
   mapKeyboardState,
   mapTouchState,
@@ -25,9 +27,15 @@ describe("input mapping", () => {
     expect(actions.jump).toBe(true);
   });
 
+  it("remaps analog deadzones and response curves for finer aiming", () => {
+    expect(applyDeadzone(0.08)).toBe(0);
+    expect(applyDeadzone(-0.58)).toBeCloseTo(-0.5);
+    expect(applyResponseCurve(-0.5, 1.45)).toBeCloseTo(-0.366, 3);
+  });
+
   it("maps gamepad axes, buttons, and deadzone", () => {
     const actions = mapGamepadState({
-      axes: [0.5, -1, 0.04, -0.8],
+      axes: [0.58, -1, 0.04, -0.58],
       buttons: [
         { pressed: true },
         { pressed: false },
@@ -41,7 +49,8 @@ describe("input mapping", () => {
     expect(actions.source).toBe("gamepad");
     expect(actions.move[0]).toBeCloseTo(0.4472, 3);
     expect(actions.move[1]).toBeCloseTo(0.8944, 3);
-    expect(actions.look).toEqual([0, -0.8]);
+    expect(actions.look[0]).toBe(0);
+    expect(actions.look[1]).toBeCloseTo(-0.366, 3);
     expect(actions.jump).toBe(true);
     expect(actions.sprint).toBe(true);
   });

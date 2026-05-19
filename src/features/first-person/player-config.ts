@@ -8,7 +8,12 @@ export interface FirstPersonPlayerConfig {
   capsuleRadius: number;
   cameraYOffset: number;
   mouseSensitivity: number;
-  gamepadLookScale: number;
+  touchLookSensitivity: number;
+  gamepadLookSensitivity: number;
+  gamepadLookResponseCurve: number;
+  maxLookDeltaPerFrame: number;
+  minPitch: number;
+  maxPitch: number;
   airControlMultiplier: number;
   groundProbeDistance: number;
   minGroundNormalY: number;
@@ -24,8 +29,13 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   capsuleHalfHeight: 0.75,
   capsuleRadius: 0.35,
   cameraYOffset: 0.6,
-  mouseSensitivity: 0.0025,
-  gamepadLookScale: 18,
+  mouseSensitivity: 0.0022,
+  touchLookSensitivity: 0.0034,
+  gamepadLookSensitivity: 0.045,
+  gamepadLookResponseCurve: 1.45,
+  maxLookDeltaPerFrame: 72,
+  minPitch: -1.35,
+  maxPitch: 1.35,
   airControlMultiplier: 0.35,
   groundProbeDistance: 0.18,
   minGroundNormalY: 0.55,

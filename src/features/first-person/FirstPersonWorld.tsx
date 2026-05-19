@@ -17,7 +17,8 @@ import {
 
 export function FirstPersonWorld({ world }: { world: WorldManifest }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { requestPointerLock } = useKeyboardPointerControls(containerRef);
+  const { beginPointerLook, updatePointerLook, endPointerLook, isDragLooking } =
+    useKeyboardPointerControls(containerRef);
   useGamepadControls();
 
   const validatedWorld = validateWorldManifest(world);
@@ -26,12 +27,13 @@ export function FirstPersonWorld({ world }: { world: WorldManifest }) {
     <section
       ref={containerRef}
       data-testid="first-person-world"
-      className="relative h-dvh w-full overflow-hidden bg-[#07090d]"
-      onPointerDown={(event) => {
-        if (event.pointerType === "mouse" && event.button === 0) {
-          requestPointerLock();
-        }
-      }}
+      className={`relative h-dvh w-full overflow-hidden bg-[#07090d] ${
+        isDragLooking ? "cursor-grabbing" : "cursor-crosshair"
+      }`}
+      onPointerDown={beginPointerLook}
+      onPointerMove={updatePointerLook}
+      onPointerCancel={endPointerLook}
+      onPointerUp={endPointerLook}
       tabIndex={0}
     >
       <Canvas

@@ -16,6 +16,14 @@ describe("first person player defaults", () => {
     expect(defaultFirstPersonPlayerConfig.capsuleRadius).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.groundProbeDistance).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.minGroundNormalY).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.mouseSensitivity).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.touchLookSensitivity).toBeGreaterThan(
+      defaultFirstPersonPlayerConfig.mouseSensitivity,
+    );
+    expect(defaultFirstPersonPlayerConfig.gamepadLookSensitivity).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.maxLookDeltaPerFrame).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.minPitch).toBeLessThan(0);
+    expect(defaultFirstPersonPlayerConfig.maxPitch).toBeGreaterThan(0);
   });
 
   it("uses capsule size plus skin distance for ground checks", () => {

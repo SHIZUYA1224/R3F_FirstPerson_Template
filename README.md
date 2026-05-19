@@ -43,9 +43,13 @@ This keeps visual detail separate from collision complexity and avoids loading a
 
 ## Controls
 
-- Desktop: WASD or arrow keys, mouse pointer lock, Space, Shift.
-- Touch: left virtual stick, right look area, jump button.
-- Gamepad: left stick, right stick, south button, shoulder or trigger.
+- Desktop: WASD or arrow keys, mouse pointer lock when available, drag-to-look fallback, Space, Shift.
+- Touch: left virtual stick, wide right look area, jump button.
+- Gamepad: left stick, curved right-stick aiming, south button, shoulder or trigger.
+
+View sensitivity lives in `src/features/first-person/player-config.ts`.
+Use `mouseSensitivity`, `touchLookSensitivity`, `gamepadLookSensitivity`, and
+`maxLookDeltaPerFrame` to tune how quickly the camera turns for each device.
 
 ## Template API
 

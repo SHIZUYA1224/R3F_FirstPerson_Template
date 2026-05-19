@@ -8,8 +8,9 @@ import {
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { useRef } from "react";
-import { MathUtils, Vector3 } from "three";
+import { Vector3 } from "three";
 import { useInputStore } from "@/features/first-person/input-store";
+import { applyLookDelta } from "@/features/first-person/look-controls";
 import {
   defaultFirstPersonPlayerConfig,
   getGroundProbeLength,
@@ -44,12 +45,15 @@ export function PlayerController({
 
     const input = useInputStore.getState().consumeFrameInput();
 
-    yaw.current -= input.look[0] * config.mouseSensitivity;
-    pitch.current = MathUtils.clamp(
-      pitch.current - input.look[1] * config.mouseSensitivity,
-      -1.35,
-      1.35,
-    );
+    const nextLook = applyLookDelta({
+      yaw: yaw.current,
+      pitch: pitch.current,
+      look: input.look,
+      source: input.source,
+      config,
+    });
+    yaw.current = nextLook.yaw;
+    pitch.current = nextLook.pitch;
 
     const velocity = body.linvel();
     const translation = body.translation();
