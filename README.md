@@ -51,6 +51,11 @@ View sensitivity lives in `src/features/first-person/player-config.ts`.
 Use `mouseSensitivity`, `touchLookSensitivity`, `gamepadLookSensitivity`, and
 `maxLookDeltaPerFrame` to tune how quickly the camera turns for each device.
 
+Player movement uses Rapier's kinematic character controller. Tune
+`characterControllerOffset`, `autostepMaxHeight`, `snapToGroundDistance`,
+`horizontalAcceleration`, and `horizontalDeceleration` when a world needs
+more or less sliding around collision meshes.
+
 ## Template API
 
 Use `FirstPersonWorld` with a world manifest:

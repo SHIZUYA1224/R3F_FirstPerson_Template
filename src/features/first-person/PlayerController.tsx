@@ -3,26 +3,32 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   CapsuleCollider,
+  CoefficientCombineRule,
   RigidBody,
   useRapier,
+  type RapierContext,
+  type RapierCollider,
   type RapierRigidBody,
 } from "@react-three/rapier";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Vector3 } from "three";
 import { useInputStore } from "@/features/first-person/input-store";
 import { applyLookDelta } from "@/features/first-person/look-controls";
+import { moveVectorToward } from "@/features/first-person/movement-controls";
 import {
   defaultFirstPersonPlayerConfig,
-  getGroundProbeLength,
-  isWalkableGroundNormal,
   type FirstPersonPlayerConfig,
 } from "@/features/first-person/player-config";
 import type { WorldManifest } from "@/features/worlds/world-manifest";
 
 const direction = new Vector3();
+const targetHorizontalVelocity = new Vector3();
+const currentHorizontalVelocity = new Vector3();
 const rotatedDirection = new Vector3();
 const upAxis = new Vector3(0, 1, 0);
-const downRayDirection = { x: 0, y: -1, z: 0 };
+type CharacterController = ReturnType<
+  RapierContext["world"]["createCharacterController"]
+>;
 
 export function PlayerController({
   world,
@@ -32,17 +38,47 @@ export function PlayerController({
   config?: FirstPersonPlayerConfig;
 }) {
   const bodyRef = useRef<RapierRigidBody>(null);
+  const colliderRef = useRef<RapierCollider>(null);
+  const characterController = useRef<CharacterController | null>(null);
+  const horizontalVelocity = useRef(new Vector3());
+  const verticalVelocity = useRef(0);
+  const grounded = useRef(false);
   const yaw = useRef(world.spawn.yaw ?? 0);
   const pitch = useRef(world.spawn.pitch ?? 0);
   const { camera } = useThree();
-  const { rapier, world: physicsWorld } = useRapier();
+  const { world: physicsWorld } = useRapier();
 
-  useFrame(() => {
+  useEffect(() => {
+    const controller = physicsWorld.createCharacterController(
+      config.characterControllerOffset,
+    );
+    controller.setSlideEnabled(true);
+    controller.enableAutostep(
+      config.autostepMaxHeight,
+      config.autostepMinWidth,
+      false,
+    );
+    controller.enableSnapToGround(config.snapToGroundDistance);
+    controller.setMaxSlopeClimbAngle(config.maxSlopeClimbAngle);
+    controller.setMinSlopeSlideAngle(config.minSlopeSlideAngle);
+    controller.setApplyImpulsesToDynamicBodies(false);
+    characterController.current = controller;
+
+    return () => {
+      characterController.current = null;
+      physicsWorld.removeCharacterController(controller);
+    };
+  }, [config, physicsWorld]);
+
+  useFrame((_, frameDelta) => {
     const body = bodyRef.current;
-    if (!body) {
+    const collider = colliderRef.current;
+    const controller = characterController.current;
+    if (!body || !collider || !controller) {
       return;
     }
 
+    const delta = Math.min(frameDelta, 1 / 30);
     const input = useInputStore.getState().consumeFrameInput();
 
     const nextLook = applyLookDelta({
@@ -55,20 +91,8 @@ export function PlayerController({
     yaw.current = nextLook.yaw;
     pitch.current = nextLook.pitch;
 
-    const velocity = body.linvel();
-    const translation = body.translation();
-    const groundHit = physicsWorld.castRayAndGetNormal(
-      new rapier.Ray(translation, downRayDirection),
-      getGroundProbeLength(config),
-      true,
-      undefined,
-      undefined,
-      undefined,
-      body,
-    );
-    const grounded = isWalkableGroundNormal(groundHit?.normal, config);
     const speed = input.sprint ? config.runSpeed : config.walkSpeed;
-    const control = grounded ? 1 : config.airControlMultiplier;
+    const control = grounded.current ? 1 : config.airControlMultiplier;
 
     direction.set(input.move[0], 0, -input.move[1]);
     if (direction.lengthSq() > 1) {
@@ -78,21 +102,59 @@ export function PlayerController({
       .copy(direction)
       .applyAxisAngle(upAxis, yaw.current)
       .multiplyScalar(speed * control);
+    targetHorizontalVelocity.copy(rotatedDirection);
 
-    const nextY = input.jump && grounded ? config.jumpVelocity : velocity.y;
-    body.setLinvel(
-      {
-        x: rotatedDirection.x,
-        y: nextY,
-        z: rotatedDirection.z,
-      },
-      true,
+    const acceleration =
+      targetHorizontalVelocity.lengthSq() > 0
+        ? config.horizontalAcceleration
+        : config.horizontalDeceleration;
+    moveVectorToward(
+      horizontalVelocity.current,
+      targetHorizontalVelocity,
+      acceleration * delta,
+      currentHorizontalVelocity,
     );
+    horizontalVelocity.current.copy(currentHorizontalVelocity);
 
+    if (input.jump && grounded.current) {
+      verticalVelocity.current = config.jumpVelocity;
+      grounded.current = false;
+    } else {
+      verticalVelocity.current += config.gravity * delta;
+    }
+
+    const desiredTranslation = {
+      x: horizontalVelocity.current.x * delta,
+      y: verticalVelocity.current * delta,
+      z: horizontalVelocity.current.z * delta,
+    };
+
+    controller.computeColliderMovement(
+      collider,
+      desiredTranslation,
+      undefined,
+      undefined,
+      (candidate) => candidate !== collider,
+    );
+    const movement = controller.computedMovement();
+    const translation = body.translation();
+    const nextTranslation = {
+      x: translation.x + movement.x,
+      y: translation.y + movement.y,
+      z: translation.z + movement.z,
+    };
+    const nextGrounded = controller.computedGrounded();
+
+    if (nextGrounded && verticalVelocity.current < 0) {
+      verticalVelocity.current = 0;
+    }
+    grounded.current = nextGrounded;
+
+    body.setNextKinematicTranslation(nextTranslation);
     camera.position.set(
-      translation.x,
-      translation.y + config.cameraYOffset,
-      translation.z,
+      nextTranslation.x,
+      nextTranslation.y + config.cameraYOffset,
+      nextTranslation.z,
     );
     camera.rotation.set(pitch.current, yaw.current, 0, "YXZ");
   });
@@ -100,13 +162,21 @@ export function PlayerController({
   return (
     <RigidBody
       ref={bodyRef}
+      canSleep={false}
       colliders={false}
       enabledRotations={[false, false, false]}
       linearDamping={config.linearDamping}
       position={[...world.spawn.position]}
-      type="dynamic"
+      type="kinematicPosition"
     >
-      <CapsuleCollider args={[config.capsuleHalfHeight, config.capsuleRadius]} />
+      <CapsuleCollider
+        ref={colliderRef}
+        args={[config.capsuleHalfHeight, config.capsuleRadius]}
+        friction={config.playerColliderFriction}
+        frictionCombineRule={CoefficientCombineRule.Min}
+        restitution={0}
+        restitutionCombineRule={CoefficientCombineRule.Min}
+      />
     </RigidBody>
   );
 }

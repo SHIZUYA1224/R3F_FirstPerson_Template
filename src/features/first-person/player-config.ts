@@ -15,6 +15,15 @@ export interface FirstPersonPlayerConfig {
   minPitch: number;
   maxPitch: number;
   airControlMultiplier: number;
+  horizontalAcceleration: number;
+  horizontalDeceleration: number;
+  characterControllerOffset: number;
+  autostepMaxHeight: number;
+  autostepMinWidth: number;
+  snapToGroundDistance: number;
+  maxSlopeClimbAngle: number;
+  minSlopeSlideAngle: number;
+  playerColliderFriction: number;
   groundProbeDistance: number;
   minGroundNormalY: number;
   linearDamping: number;
@@ -37,6 +46,15 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   minPitch: -1.35,
   maxPitch: 1.35,
   airControlMultiplier: 0.35,
+  horizontalAcceleration: 42,
+  horizontalDeceleration: 56,
+  characterControllerOffset: 0.04,
+  autostepMaxHeight: 0.36,
+  autostepMinWidth: 0.2,
+  snapToGroundDistance: 0.32,
+  maxSlopeClimbAngle: Math.PI / 4,
+  minSlopeSlideAngle: Math.PI / 3,
+  playerColliderFriction: 0,
   groundProbeDistance: 0.18,
   minGroundNormalY: 0.55,
   linearDamping: 0.8,

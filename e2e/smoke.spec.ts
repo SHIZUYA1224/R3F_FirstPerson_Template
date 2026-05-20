@@ -31,6 +31,28 @@ test("keeps mobile controls separated on a phone viewport", async ({ page }) => 
   await expectScenePixels(page);
 });
 
+test("slides instead of freezing when moving into a starter obstacle", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByTestId("first-person-world")).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
+  await page.waitForTimeout(500);
+
+  const start = PNG.sync.read(await page.screenshot());
+  await page.keyboard.down("s");
+  await page.keyboard.down("d");
+  await page.waitForTimeout(3_000);
+  const impact = PNG.sync.read(await page.screenshot());
+
+  await page.keyboard.up("s");
+  await page.waitForTimeout(1_600);
+  const slide = PNG.sync.read(await page.screenshot());
+  await page.keyboard.up("d");
+
+  expect(getScreenshotDiffRatio(start, impact)).toBeGreaterThan(0.12);
+  expect(getScreenshotDiffRatio(impact, slide)).toBeGreaterThan(0.06);
+});
+
 async function expectScenePixels(page: Page) {
   let stats = await getScenePixelStats(page);
 
@@ -74,6 +96,28 @@ async function getScenePixelStats(page: Page) {
     colors: colors.size,
     nonBlackRatio: nonBlackPixels / samples,
   };
+}
+
+function getScreenshotDiffRatio(a: PNG, b: PNG) {
+  let changedPixels = 0;
+  let samples = 0;
+
+  for (let y = 0; y < a.height; y += 8) {
+    for (let x = 0; x < a.width; x += 8) {
+      const index = (a.width * y + x) * 4;
+      const diff =
+        Math.abs(a.data[index] - b.data[index]) +
+        Math.abs(a.data[index + 1] - b.data[index + 1]) +
+        Math.abs(a.data[index + 2] - b.data[index + 2]);
+
+      if (diff > 30) {
+        changedPixels += 1;
+      }
+      samples += 1;
+    }
+  }
+
+  return changedPixels / samples;
 }
 
 function isScenePainted(stats: { colors: number; nonBlackRatio: number }) {
