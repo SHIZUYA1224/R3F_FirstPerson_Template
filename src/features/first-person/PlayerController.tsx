@@ -14,7 +14,7 @@ import { useEffect, useRef } from "react";
 import { Vector3 } from "three";
 import { useInputStore } from "@/features/first-person/input-store";
 import { applyLookDelta } from "@/features/first-person/look-controls";
-import { moveVectorToward } from "@/features/first-person/movement-controls";
+import { resolveHorizontalVelocity } from "@/features/first-person/movement-controls";
 import {
   defaultFirstPersonPlayerConfig,
   type FirstPersonPlayerConfig,
@@ -92,28 +92,27 @@ export function PlayerController({
     pitch.current = nextLook.pitch;
 
     const speed = input.sprint ? config.runSpeed : config.walkSpeed;
-    const control = grounded.current ? 1 : config.airControlMultiplier;
 
     direction.set(input.move[0], 0, -input.move[1]);
+    const hasMoveInput = direction.lengthSq() > 0;
     if (direction.lengthSq() > 1) {
       direction.normalize();
     }
     rotatedDirection
       .copy(direction)
       .applyAxisAngle(upAxis, yaw.current)
-      .multiplyScalar(speed * control);
+      .multiplyScalar(speed);
     targetHorizontalVelocity.copy(rotatedDirection);
 
-    const acceleration =
-      targetHorizontalVelocity.lengthSq() > 0
-        ? config.horizontalAcceleration
-        : config.horizontalDeceleration;
-    moveVectorToward(
-      horizontalVelocity.current,
-      targetHorizontalVelocity,
-      acceleration * delta,
-      currentHorizontalVelocity,
-    );
+    resolveHorizontalVelocity({
+      current: horizontalVelocity.current,
+      target: targetHorizontalVelocity,
+      grounded: grounded.current,
+      hasMoveInput,
+      delta,
+      config,
+      output: currentHorizontalVelocity,
+    });
     horizontalVelocity.current.copy(currentHorizontalVelocity);
 
     if (input.jump && grounded.current) {

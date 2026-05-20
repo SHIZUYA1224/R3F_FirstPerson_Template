@@ -25,6 +25,9 @@ describe("first person player defaults", () => {
     expect(defaultFirstPersonPlayerConfig.maxLookDeltaPerFrame).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.minPitch).toBeLessThan(0);
     expect(defaultFirstPersonPlayerConfig.maxPitch).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.airControlMultiplier).toBeGreaterThan(0);
+    expect(defaultFirstPersonPlayerConfig.airControlMultiplier).toBeLessThan(1);
+    expect(defaultFirstPersonPlayerConfig.airDrag).toBeGreaterThanOrEqual(0);
     expect(defaultFirstPersonPlayerConfig.horizontalAcceleration).toBeGreaterThan(
       defaultFirstPersonPlayerConfig.walkSpeed,
     );

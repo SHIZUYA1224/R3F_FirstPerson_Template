@@ -16,6 +16,7 @@ export interface FirstPersonPlayerConfig {
   minPitch: number;
   maxPitch: number;
   airControlMultiplier: number;
+  airDrag: number;
   horizontalAcceleration: number;
   horizontalDeceleration: number;
   characterControllerOffset: number;
@@ -47,7 +48,8 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   maxLookDeltaPerFrame: 72,
   minPitch: -1.35,
   maxPitch: 1.35,
-  airControlMultiplier: 0.35,
+  airControlMultiplier: 0.22,
+  airDrag: 0.15,
   horizontalAcceleration: 42,
   horizontalDeceleration: 56,
   characterControllerOffset: 0.04,

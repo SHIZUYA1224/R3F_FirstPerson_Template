@@ -56,7 +56,9 @@ Use `mouseSensitivity`, `touchLookSensitivity`, `gamepadLookSensitivity`, and
 Player movement uses Rapier's kinematic character controller. Tune
 `characterControllerOffset`, `autostepMaxHeight`, `snapToGroundDistance`,
 `horizontalAcceleration`, and `horizontalDeceleration` when a world needs
-more or less sliding around collision meshes.
+more or less sliding around collision meshes. Air movement preserves horizontal
+momentum; `airControlMultiplier` controls mid-air steering strength and
+`airDrag` controls slow airborne momentum loss.
 
 ## Template API
 
