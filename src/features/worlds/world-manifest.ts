@@ -65,7 +65,7 @@ export const worlds = [
     glbPath: null,
     spawn: {
       position: [0, 1.12, 5],
-      yaw: Math.PI,
+      yaw: 0,
       pitch: 0,
     },
     colliderPrefix: DEFAULT_COLLIDER_PREFIX,

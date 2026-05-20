@@ -39,18 +39,43 @@ test("slides instead of freezing when moving into a starter obstacle", async ({ 
   await page.waitForTimeout(500);
 
   const start = PNG.sync.read(await page.screenshot());
-  await page.keyboard.down("s");
-  await page.keyboard.down("d");
+  await page.keyboard.down("w");
+  await page.keyboard.down("a");
   await page.waitForTimeout(3_000);
   const impact = PNG.sync.read(await page.screenshot());
 
-  await page.keyboard.up("s");
+  await page.keyboard.up("w");
   await page.waitForTimeout(1_600);
   const slide = PNG.sync.read(await page.screenshot());
-  await page.keyboard.up("d");
+  await page.keyboard.up("a");
 
   expect(getScreenshotDiffRatio(start, impact)).toBeGreaterThan(0.12);
   expect(getScreenshotDiffRatio(impact, slide)).toBeGreaterThan(0.06);
+});
+
+test("keeps turning while the mobile look area is held", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await expect(page.getByTestId("first-person-world")).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
+  await page.waitForTimeout(500);
+
+  const look = page.getByTestId("mobile-look-zone");
+  const lookBox = await look.boundingBox();
+  expect(lookBox).not.toBeNull();
+
+  const before = PNG.sync.read(await page.screenshot());
+  const startX = lookBox!.x + lookBox!.width * 0.45;
+  const startY = lookBox!.y + lookBox!.height * 0.52;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + 95, startY, { steps: 8 });
+  await page.waitForTimeout(1_400);
+  const heldTurn = PNG.sync.read(await page.screenshot());
+  await page.mouse.up();
+
+  expect(getScreenshotDiffRatio(before, heldTurn)).toBeGreaterThan(0.025);
 });
 
 async function expectScenePixels(page: Page) {

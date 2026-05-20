@@ -39,4 +39,19 @@ describe("look controls", () => {
     expect(next.pitch).toBeLessThanOrEqual(defaultFirstPersonPlayerConfig.maxPitch);
     expect(next.pitch).toBeGreaterThan(0);
   });
+
+  it("scales touch hold look before applying sensitivity", () => {
+    const next = applyLookDelta({
+      yaw: 0,
+      pitch: 0,
+      look: [1, 0],
+      source: "touch",
+      config: defaultFirstPersonPlayerConfig,
+    });
+
+    expect(next.yaw).toBeCloseTo(
+      -defaultFirstPersonPlayerConfig.touchLookHoldScale *
+        defaultFirstPersonPlayerConfig.touchLookSensitivity,
+    );
+  });
 });

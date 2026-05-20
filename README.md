@@ -44,12 +44,14 @@ This keeps visual detail separate from collision complexity and avoids loading a
 ## Controls
 
 - Desktop: WASD or arrow keys, mouse pointer lock when available, drag-to-look fallback, Space, Shift.
-- Touch: left virtual stick, wide right look area, jump button.
+- Touch: left virtual stick, wide right look area, jump button. Hold and drag
+  the right side to keep turning.
 - Gamepad: left stick, curved right-stick aiming, south button, shoulder or trigger.
 
 View sensitivity lives in `src/features/first-person/player-config.ts`.
 Use `mouseSensitivity`, `touchLookSensitivity`, `gamepadLookSensitivity`, and
 `maxLookDeltaPerFrame` to tune how quickly the camera turns for each device.
+`touchLookHoldScale` controls how fast mobile view turns while the right side is held.
 
 Player movement uses Rapier's kinematic character controller. Tune
 `characterControllerOffset`, `autostepMaxHeight`, `snapToGroundDistance`,

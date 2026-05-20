@@ -5,6 +5,8 @@ import { useRef, useState, type PointerEvent } from "react";
 import { useInputStore } from "@/features/first-person/input-store";
 
 const joystickRadius = 48;
+const lookRadius = 76;
+const lookDeadzone = 0.06;
 
 export function MobileControls() {
   const joystickRef = useRef<HTMLDivElement>(null);
@@ -59,21 +61,28 @@ export function MobileControls() {
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
-  function updateLook(event: PointerEvent<HTMLDivElement>) {
+  function updateLookHold(event: PointerEvent<HTMLDivElement>) {
     const active = lookPointer.current;
     if (!active || active.id !== event.pointerId) {
       return;
     }
 
     event.preventDefault();
-    useInputStore
-      .getState()
-      .queueLookDelta(event.clientX - active.x, event.clientY - active.y, "touch");
-    lookPointer.current = {
-      id: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-    };
+
+    const rawX = event.clientX - active.x;
+    const rawY = event.clientY - active.y;
+    const length = Math.hypot(rawX, rawY);
+    const scale = length > lookRadius ? lookRadius / length : 1;
+    const x = (rawX * scale) / lookRadius;
+    const y = (rawY * scale) / lookRadius;
+    const nextLook: [number, number] =
+      Math.hypot(x, y) < lookDeadzone ? [0, 0] : [x, y];
+
+    useInputStore.getState().setTouchLookHold(nextLook);
+  }
+
+  function updateLook(event: PointerEvent<HTMLDivElement>) {
+    updateLookHold(event);
   }
 
   function releaseLook(event: PointerEvent<HTMLDivElement>) {
@@ -81,6 +90,7 @@ export function MobileControls() {
 
     if (lookPointer.current?.id === event.pointerId) {
       lookPointer.current = null;
+      useInputStore.getState().setTouchLookHold([0, 0]);
     }
   }
 

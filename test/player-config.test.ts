@@ -20,6 +20,7 @@ describe("first person player defaults", () => {
     expect(defaultFirstPersonPlayerConfig.touchLookSensitivity).toBeGreaterThan(
       defaultFirstPersonPlayerConfig.mouseSensitivity,
     );
+    expect(defaultFirstPersonPlayerConfig.touchLookHoldScale).toBeGreaterThan(1);
     expect(defaultFirstPersonPlayerConfig.gamepadLookSensitivity).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.maxLookDeltaPerFrame).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.minPitch).toBeLessThan(0);

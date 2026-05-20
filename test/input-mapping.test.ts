@@ -5,6 +5,7 @@ import {
   mapGamepadState,
   mapKeyboardState,
   mapTouchState,
+  mergeInputActions,
 } from "@/features/first-person/input-mapping";
 
 describe("input mapping", () => {
@@ -53,5 +54,15 @@ describe("input mapping", () => {
     expect(actions.look[1]).toBeCloseTo(-0.366, 3);
     expect(actions.jump).toBe(true);
     expect(actions.sprint).toBe(true);
+  });
+
+  it("keeps movement while look input is active", () => {
+    const keyboard = mapKeyboardState(new Set(["KeyW"]));
+    const lookOnly = mapTouchState({ look: [1, 0] });
+    const actions = mergeInputActions(keyboard, lookOnly);
+
+    expect(actions.move).toEqual([0, 1]);
+    expect(actions.look).toEqual([1, 0]);
+    expect(actions.source).toBe("touch");
   });
 });

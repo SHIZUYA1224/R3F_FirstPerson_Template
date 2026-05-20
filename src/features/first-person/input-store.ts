@@ -15,11 +15,13 @@ interface FirstPersonInputStore {
   activeSource: InputSource;
   pressedKeys: Set<string>;
   touchMove: [number, number];
+  touchLookHold: [number, number];
   touchJump: boolean;
   gamepadActions: InputActions;
   lookDelta: [number, number];
   setKey: (code: string, pressed: boolean) => void;
   setTouchMove: (move: MoveVector) => void;
+  setTouchLookHold: (look: MoveVector) => void;
   setTouchJump: (jump: boolean) => void;
   setGamepadActions: (actions: InputActions) => void;
   queueLookDelta: (x: number, y: number, source?: InputSource) => void;
@@ -31,6 +33,7 @@ export const useInputStore = create<FirstPersonInputStore>((set, get) => ({
   activeSource: "idle",
   pressedKeys: new Set<string>(),
   touchMove: [0, 0],
+  touchLookHold: [0, 0],
   touchJump: false,
   gamepadActions: emptyInputActions,
   lookDelta: [0, 0],
@@ -50,6 +53,11 @@ export const useInputStore = create<FirstPersonInputStore>((set, get) => ({
   setTouchMove: (move) =>
     set({
       touchMove: [move[0], move[1]],
+      activeSource: "touch",
+    }),
+  setTouchLookHold: (look) =>
+    set({
+      touchLookHold: [look[0], look[1]],
       activeSource: "touch",
     }),
   setTouchJump: (jump) =>
@@ -72,6 +80,7 @@ export const useInputStore = create<FirstPersonInputStore>((set, get) => ({
     const keyboard = mapKeyboardState(state.pressedKeys);
     const touch = mapTouchState({
       move: state.touchMove,
+      look: state.touchLookHold,
       jump: state.touchJump,
     });
     const look: InputActions = {
@@ -90,6 +99,7 @@ export const useInputStore = create<FirstPersonInputStore>((set, get) => ({
       activeSource: "idle",
       pressedKeys: new Set<string>(),
       touchMove: [0, 0],
+      touchLookHold: [0, 0],
       touchJump: false,
       gamepadActions: emptyInputActions,
       lookDelta: [0, 0],

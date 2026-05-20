@@ -49,13 +49,18 @@ export function applyLookDelta({
     FirstPersonPlayerConfig,
     | "mouseSensitivity"
     | "touchLookSensitivity"
+    | "touchLookHoldScale"
     | "gamepadLookSensitivity"
     | "maxLookDeltaPerFrame"
     | "minPitch"
     | "maxPitch"
   >;
 }) {
-  const [lookX, lookY] = clampLookDelta(look, config.maxLookDeltaPerFrame);
+  const scaledLook: LookVector =
+    source === "touch"
+      ? [look[0] * config.touchLookHoldScale, look[1] * config.touchLookHoldScale]
+      : look;
+  const [lookX, lookY] = clampLookDelta(scaledLook, config.maxLookDeltaPerFrame);
   const sensitivity = getLookSensitivity(source, config);
   const nextPitch = pitch - lookY * sensitivity;
 

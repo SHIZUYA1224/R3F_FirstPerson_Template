@@ -129,9 +129,10 @@ export function mapGamepadState(
 export function mergeInputActions(...actions: readonly InputActions[]): InputActions {
   const active = actions.filter(isActionsActive);
   const primary = active.at(-1) ?? emptyInputActions;
+  const movement = findLastMoveInput(active);
 
   return {
-    move: primary.move,
+    move: movement?.move ?? [0, 0],
     look: [
       actions.reduce((sum, action) => sum + action.look[0], 0),
       actions.reduce((sum, action) => sum + action.look[1], 0),
@@ -151,6 +152,20 @@ export function isActionsActive(action: Pick<InputActions, "move" | "look" | "ju
     action.jump ||
     action.sprint
   );
+}
+
+function hasMoveInput(action: Pick<InputActions, "move">) {
+  return Math.abs(action.move[0]) > 0 || Math.abs(action.move[1]) > 0;
+}
+
+function findLastMoveInput(actions: readonly InputActions[]) {
+  for (let index = actions.length - 1; index >= 0; index -= 1) {
+    if (hasMoveInput(actions[index])) {
+      return actions[index];
+    }
+  }
+
+  return undefined;
 }
 
 function isPressed(button: { pressed?: boolean; value?: number } | undefined) {

@@ -9,6 +9,7 @@ export interface FirstPersonPlayerConfig {
   cameraYOffset: number;
   mouseSensitivity: number;
   touchLookSensitivity: number;
+  touchLookHoldScale: number;
   gamepadLookSensitivity: number;
   gamepadLookResponseCurve: number;
   maxLookDeltaPerFrame: number;
@@ -40,6 +41,7 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   cameraYOffset: 0.6,
   mouseSensitivity: 0.0022,
   touchLookSensitivity: 0.0034,
+  touchLookHoldScale: 8,
   gamepadLookSensitivity: 0.045,
   gamepadLookResponseCurve: 1.45,
   maxLookDeltaPerFrame: 72,
