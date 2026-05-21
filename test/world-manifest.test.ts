@@ -41,7 +41,7 @@ describe("world manifest security", () => {
 
     expect(defaultWorld.id).toBe("siliq");
     expect(siliq?.glbPath).toBe("/worlds/SILIQ.glb");
-    expect(siliq?.scale).toBe(0.1);
+    expect(siliq?.scale).toBe(0.2);
     expect(getWorldColliderMode(siliq!)).toBe("visible-mesh");
   });
 

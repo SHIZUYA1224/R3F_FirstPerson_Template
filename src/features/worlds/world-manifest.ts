@@ -71,13 +71,13 @@ export const worlds = [
     description: "Imported GLB world using visible mesh collision for quick walkthroughs.",
     glbPath: "/worlds/SILIQ.glb",
     spawn: {
-      position: [0, 1.08, 2],
+      position: [0, 1.03, 4],
       yaw: 0,
       pitch: 0,
     },
     colliderPrefix: DEFAULT_COLLIDER_PREFIX,
     colliderMode: "visible-mesh",
-    scale: 0.1,
+    scale: 0.2,
   },
   {
     id: "starter-room",

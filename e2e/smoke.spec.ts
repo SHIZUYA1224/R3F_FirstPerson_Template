@@ -36,7 +36,7 @@ test("spawns on a stable mesh surface", async ({ page }) => {
   expect(settled.worldId).toBe("siliq");
   expect(settled.grounded).toBe(true);
   expect(settled.position.y).toBeGreaterThan(0.8);
-  expect(Math.abs(settled.position.z - 2)).toBeLessThan(0.35);
+  expect(Math.abs(settled.position.z - 4)).toBeLessThan(0.35);
   expect(Math.abs(settled.position.y - startY)).toBeLessThan(0.25);
 });
 

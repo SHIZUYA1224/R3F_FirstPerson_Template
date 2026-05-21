@@ -40,9 +40,9 @@ use `colliderMode: "visible-mesh"`:
   name: "SILIQ",
   description: "Imported GLB world.",
   glbPath: "/worlds/SILIQ.glb",
-  spawn: { position: [0, 1.08, 2], yaw: 0 },
+  spawn: { position: [0, 1.03, 4], yaw: 0 },
   colliderMode: "visible-mesh",
-  scale: 0.1,
+  scale: 0.2,
 }
 ```
 
