@@ -1,6 +1,6 @@
 # R3F First Person Template
 
-Next.js App Router, React Three Fiber, and Rapier starter for walking through a 3D world in first person.
+Next.js App Router, React Three Fiber, and Rapier starter for walking through a 3D world in first person. The default world is `public/worlds/SILIQ.glb`.
 
 ## Quick Start
 
@@ -31,6 +31,21 @@ Example:
 }
 ```
 
+For a quick import where the visible GLB mesh should also be the trimesh collider,
+use `colliderMode: "visible-mesh"`:
+
+```ts
+{
+  id: "siliq",
+  name: "SILIQ",
+  description: "Imported GLB world.",
+  glbPath: "/worlds/SILIQ.glb",
+  spawn: { position: [0, 5.57, -22], yaw: 0 },
+  colliderMode: "visible-mesh",
+  scale: 0.1,
+}
+```
+
 ## Blender Collider Rule
 
 Create low-poly collision meshes in Blender and prefix their object names with `COLLIDER_`.
@@ -40,6 +55,8 @@ Create low-poly collision meshes in Blender and prefix their object names with `
 - Collider meshes are hidden at runtime.
 
 This keeps visual detail separate from collision complexity and avoids loading arbitrary external assets.
+`colliderMode: "visible-mesh"` is convenient for checking imported worlds quickly, but
+`COLLIDER_` meshes are still recommended for large or dense production scenes.
 
 ## Controls
 

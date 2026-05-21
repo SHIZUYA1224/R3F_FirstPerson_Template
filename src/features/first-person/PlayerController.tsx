@@ -30,6 +30,18 @@ type CharacterController = ReturnType<
   RapierContext["world"]["createCharacterController"]
 >;
 
+declare global {
+  interface Window {
+    __R3F_FIRST_PERSON_DEBUG__?: {
+      grounded: boolean;
+      pitch: number;
+      position: { x: number; y: number; z: number };
+      worldId: string;
+      yaw: number;
+    };
+  }
+}
+
 export function PlayerController({
   world,
   config = defaultFirstPersonPlayerConfig,
@@ -156,6 +168,14 @@ export function PlayerController({
       nextTranslation.z,
     );
     camera.rotation.set(pitch.current, yaw.current, 0, "YXZ");
+
+    window.__R3F_FIRST_PERSON_DEBUG__ = {
+      grounded: grounded.current,
+      pitch: pitch.current,
+      position: nextTranslation,
+      worldId: world.id,
+      yaw: yaw.current,
+    };
   });
 
   return (

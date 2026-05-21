@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  defaultWorld,
+  getWorldColliderMode,
   isSafeWorldGlbPath,
   validateWorldManifest,
+  worlds,
   type WorldManifest,
 } from "@/features/worlds/world-manifest";
 import {
@@ -13,6 +16,7 @@ import {
 describe("world manifest security", () => {
   it("allows only local /worlds/*.glb assets", () => {
     expect(isSafeWorldGlbPath("/worlds/gallery.glb")).toBe(true);
+    expect(isSafeWorldGlbPath("/worlds/SILIQ.glb")).toBe(true);
     expect(isSafeWorldGlbPath("/worlds/floor-01/room.v1.glb")).toBe(true);
     expect(isSafeWorldGlbPath("https://example.com/world.glb")).toBe(false);
     expect(isSafeWorldGlbPath("/models/world.glb")).toBe(false);
@@ -30,6 +34,19 @@ describe("world manifest security", () => {
     };
 
     expect(() => validateWorldManifest(unsafeWorld)).toThrow(/Unsafe GLB path/);
+  });
+
+  it("uses SILIQ as the default visible-mesh collider world", () => {
+    const siliq = worlds.find((world) => world.id === "siliq");
+
+    expect(defaultWorld.id).toBe("siliq");
+    expect(siliq?.glbPath).toBe("/worlds/SILIQ.glb");
+    expect(siliq?.scale).toBe(0.1);
+    expect(getWorldColliderMode(siliq!)).toBe("visible-mesh");
+  });
+
+  it("falls back to prefixed collision meshes for regular worlds", () => {
+    expect(getWorldColliderMode({})).toBe("prefixed");
   });
 });
 

@@ -10,7 +10,11 @@ import {
 import { Suspense, useMemo } from "react";
 import { Group, Mesh, MeshStandardMaterial, Object3D } from "three";
 import { isColliderNodeName } from "@/features/worlds/collider-names";
-import type { WorldManifest } from "@/features/worlds/world-manifest";
+import {
+  getWorldColliderMode,
+  type WorldColliderMode,
+  type WorldManifest,
+} from "@/features/worlds/world-manifest";
 
 const fixedColliderProps = {
   friction: 0,
@@ -126,18 +130,20 @@ function FixedBox({
 function GltfWorld({ glbPath, world }: { glbPath: string; world: WorldManifest }) {
   const gltf = useGLTF(glbPath);
   const colliderPrefix = world.colliderPrefix;
+  const colliderMode = getWorldColliderMode(world);
+  const worldScale = world.scale ?? 1;
   const { visibleScene, colliderScene } = useMemo(
-    () => splitGltfScene(gltf.scene, colliderPrefix),
-    [gltf.scene, colliderPrefix],
+    () => splitGltfScene(gltf.scene, colliderPrefix, colliderMode, worldScale),
+    [gltf.scene, colliderPrefix, colliderMode, worldScale],
   );
 
   return (
-    <group scale={world.scale ?? 1}>
+    <>
       <primitive object={visibleScene} />
       <RigidBody type="fixed" colliders="trimesh" {...fixedColliderProps}>
         <primitive object={colliderScene} />
       </RigidBody>
-    </group>
+    </>
   );
 }
 
@@ -151,8 +157,14 @@ function WorldLoading() {
   );
 }
 
-function splitGltfScene(scene: Group, colliderPrefix = "COLLIDER_") {
+function splitGltfScene(
+  scene: Group,
+  colliderPrefix = "COLLIDER_",
+  colliderMode: WorldColliderMode = "prefixed",
+  worldScale = 1,
+) {
   const visibleScene = scene.clone(true);
+  visibleScene.scale.setScalar(worldScale);
   visibleScene.traverse((node) => {
     if (node instanceof Mesh && isColliderNodeName(node.name, colliderPrefix)) {
       node.visible = false;
@@ -164,9 +176,47 @@ function splitGltfScene(scene: Group, colliderPrefix = "COLLIDER_") {
   });
 
   const colliderScene = scene.clone(true);
-  pruneColliderScene(colliderScene, colliderPrefix);
-  colliderScene.traverse((node) => {
+  if (colliderMode === "visible-mesh") {
+    pruneVisibleMeshColliderScene(colliderScene, colliderPrefix);
+  } else {
+    prunePrefixedColliderScene(colliderScene, colliderPrefix);
+  }
+  const bakedColliderScene = bakeColliderMeshScene(colliderScene, worldScale);
+  makeColliderSceneInvisible(bakedColliderScene);
+
+  return { visibleScene, colliderScene: bakedColliderScene };
+}
+
+function prunePrefixedColliderScene(root: Object3D, colliderPrefix: string) {
+  for (const child of [...root.children]) {
+    prunePrefixedColliderScene(child, colliderPrefix);
+    const isColliderMesh = child instanceof Mesh && isColliderNodeName(child.name, colliderPrefix);
+    const isEmptyGroup = !(child instanceof Mesh) && child.children.length === 0;
+
+    if ((!isColliderMesh && child instanceof Mesh) || isEmptyGroup) {
+      root.remove(child);
+    }
+  }
+}
+
+function pruneVisibleMeshColliderScene(root: Object3D, colliderPrefix: string) {
+  for (const child of [...root.children]) {
+    pruneVisibleMeshColliderScene(child, colliderPrefix);
+    const isColliderHelper = child instanceof Mesh && isColliderNodeName(child.name, colliderPrefix);
+    const isEmptyGroup = !(child instanceof Mesh) && child.children.length === 0;
+
+    if (isColliderHelper || isEmptyGroup) {
+      root.remove(child);
+    }
+  }
+}
+
+function makeColliderSceneInvisible(root: Object3D) {
+  root.traverse((node) => {
     if (node instanceof Mesh) {
+      node.visible = true;
+      node.castShadow = false;
+      node.receiveShadow = false;
       node.material = new MeshStandardMaterial({
         color: "#ffffff",
         transparent: true,
@@ -175,18 +225,22 @@ function splitGltfScene(scene: Group, colliderPrefix = "COLLIDER_") {
       });
     }
   });
-
-  return { visibleScene, colliderScene };
 }
 
-function pruneColliderScene(root: Object3D, colliderPrefix: string) {
-  for (const child of [...root.children]) {
-    pruneColliderScene(child, colliderPrefix);
-    const isColliderMesh = child instanceof Mesh && isColliderNodeName(child.name, colliderPrefix);
-    const isEmptyGroup = !(child instanceof Mesh) && child.children.length === 0;
+function bakeColliderMeshScene(root: Object3D, worldScale: number) {
+  root.scale.setScalar(worldScale);
+  root.updateMatrixWorld(true);
 
-    if ((!isColliderMesh && child instanceof Mesh) || isEmptyGroup) {
-      root.remove(child);
+  const bakedScene = new Group();
+  root.traverse((node) => {
+    if (node instanceof Mesh) {
+      const geometry = node.geometry.clone();
+      geometry.applyMatrix4(node.matrixWorld);
+      const bakedMesh = new Mesh(geometry, node.material);
+      bakedMesh.name = node.name;
+      bakedScene.add(bakedMesh);
     }
-  }
+  });
+
+  return bakedScene;
 }

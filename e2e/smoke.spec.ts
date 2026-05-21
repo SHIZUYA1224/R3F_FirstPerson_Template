@@ -1,13 +1,42 @@
 import { expect, test, type Page } from "@playwright/test";
 import { PNG } from "pngjs";
 
+type PlayerDebug = {
+  grounded: boolean;
+  pitch: number;
+  position: { x: number; y: number; z: number };
+  worldId: string;
+  yaw: number;
+};
+
+declare global {
+  interface Window {
+    __R3F_FIRST_PERSON_DEBUG__?: PlayerDebug;
+  }
+}
+
 test("loads the first person template shell", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByTestId("first-person-world")).toBeVisible();
   await expect(page.locator("canvas")).toBeVisible();
-  await expect(page.getByTestId("control-hud")).toContainText("Starter Room");
+  await expect(page.getByTestId("control-hud")).toContainText("SILIQ");
   await expectScenePixels(page);
+});
+
+test("spawns on a stable mesh surface", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.getByTestId("first-person-world")).toBeVisible();
+  const startY = await waitForPlayerY(page);
+
+  await page.waitForTimeout(1_800);
+  const settled = await getPlayerDebug(page);
+
+  expect(settled.worldId).toBe("siliq");
+  expect(settled.grounded).toBe(true);
+  expect(settled.position.y).toBeGreaterThan(2.2);
+  expect(Math.abs(settled.position.y - startY)).toBeLessThan(0.25);
 });
 
 test("keeps mobile controls separated on a phone viewport", async ({ page }) => {
@@ -31,26 +60,23 @@ test("keeps mobile controls separated on a phone viewport", async ({ page }) => 
   await expectScenePixels(page);
 });
 
-test("slides instead of freezing when moving into a starter obstacle", async ({ page }) => {
+test("keeps moving through the default mesh-collider world", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByTestId("first-person-world")).toBeVisible();
   await expect(page.locator("canvas")).toBeVisible();
-  await page.waitForTimeout(500);
+  await waitForPlayerY(page);
+  await page.getByTestId("first-person-world").click({ position: { x: 200, y: 200 } });
+  const start = await getPlayerDebug(page);
 
-  const start = PNG.sync.read(await page.screenshot());
   await page.keyboard.down("w");
   await page.keyboard.down("a");
-  await page.waitForTimeout(3_000);
-  const impact = PNG.sync.read(await page.screenshot());
-
+  await page.waitForTimeout(1_200);
+  const moved = await getPlayerDebug(page);
   await page.keyboard.up("w");
-  await page.waitForTimeout(1_600);
-  const slide = PNG.sync.read(await page.screenshot());
   await page.keyboard.up("a");
 
-  expect(getScreenshotDiffRatio(start, impact)).toBeGreaterThan(0.12);
-  expect(getScreenshotDiffRatio(impact, slide)).toBeGreaterThan(0.06);
+  expect(getHorizontalDistance(start.position, moved.position)).toBeGreaterThan(1);
 });
 
 test("keeps turning while the mobile look area is held", async ({ page }) => {
@@ -59,23 +85,23 @@ test("keeps turning while the mobile look area is held", async ({ page }) => {
 
   await expect(page.getByTestId("first-person-world")).toBeVisible();
   await expect(page.locator("canvas")).toBeVisible();
-  await page.waitForTimeout(500);
+  await waitForPlayerY(page);
 
   const look = page.getByTestId("mobile-look-zone");
   const lookBox = await look.boundingBox();
   expect(lookBox).not.toBeNull();
 
-  const before = PNG.sync.read(await page.screenshot());
+  const before = await getPlayerDebug(page);
   const startX = lookBox!.x + lookBox!.width * 0.45;
   const startY = lookBox!.y + lookBox!.height * 0.52;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
   await page.mouse.move(startX + 95, startY, { steps: 8 });
   await page.waitForTimeout(1_400);
-  const heldTurn = PNG.sync.read(await page.screenshot());
+  const heldTurn = await getPlayerDebug(page);
   await page.mouse.up();
 
-  expect(getScreenshotDiffRatio(before, heldTurn)).toBeGreaterThan(0.025);
+  expect(getYawDelta(before.yaw, heldTurn.yaw)).toBeGreaterThan(0.2);
 });
 
 async function expectScenePixels(page: Page) {
@@ -123,28 +149,6 @@ async function getScenePixelStats(page: Page) {
   };
 }
 
-function getScreenshotDiffRatio(a: PNG, b: PNG) {
-  let changedPixels = 0;
-  let samples = 0;
-
-  for (let y = 0; y < a.height; y += 8) {
-    for (let x = 0; x < a.width; x += 8) {
-      const index = (a.width * y + x) * 4;
-      const diff =
-        Math.abs(a.data[index] - b.data[index]) +
-        Math.abs(a.data[index + 1] - b.data[index + 1]) +
-        Math.abs(a.data[index + 2] - b.data[index + 2]);
-
-      if (diff > 30) {
-        changedPixels += 1;
-      }
-      samples += 1;
-    }
-  }
-
-  return changedPixels / samples;
-}
-
 function isScenePainted(stats: { colors: number; nonBlackRatio: number }) {
   return stats.colors >= 5 && stats.nonBlackRatio > 0.2;
 }
@@ -159,4 +163,35 @@ function boxesOverlap(
     a.y + a.height <= b.y ||
     b.y + b.height <= a.y
   );
+}
+
+function getHorizontalDistance(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+) {
+  return Math.hypot(b.x - a.x, b.z - a.z);
+}
+
+function getYawDelta(a: number, b: number) {
+  return Math.abs(Math.atan2(Math.sin(b - a), Math.cos(b - a)));
+}
+
+async function waitForPlayerY(page: Page) {
+  await page.waitForFunction(
+    () => {
+      const debug = window.__R3F_FIRST_PERSON_DEBUG__;
+      return Boolean(debug && debug.worldId === "siliq" && debug.grounded);
+    },
+    undefined,
+    { timeout: 8_000 },
+  );
+
+  return (await getPlayerDebug(page)).position.y;
+}
+
+async function getPlayerDebug(page: Page) {
+  const debug = await page.evaluate(() => window.__R3F_FIRST_PERSON_DEBUG__);
+
+  expect(debug).toBeDefined();
+  return debug!;
 }
