@@ -71,7 +71,7 @@ export const worlds = [
     description: "Imported GLB world using visible mesh collision for quick walkthroughs.",
     glbPath: "/worlds/SILIQ.glb",
     spawn: {
-      position: [0, 1.03, 4],
+      position: [-2, -0.31, 4],
       yaw: 0,
       pitch: 0,
     },
