@@ -14,6 +14,11 @@ describe("first person player defaults", () => {
       defaultFirstPersonPlayerConfig.walkSpeed,
     );
     expect(defaultFirstPersonPlayerConfig.capsuleRadius).toBeGreaterThan(0);
+    expect(
+      defaultFirstPersonPlayerConfig.capsuleHalfHeight +
+        defaultFirstPersonPlayerConfig.capsuleRadius +
+        defaultFirstPersonPlayerConfig.cameraYOffset,
+    ).toBeCloseTo(1.63);
     expect(defaultFirstPersonPlayerConfig.groundProbeDistance).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.minGroundNormalY).toBeGreaterThan(0);
     expect(defaultFirstPersonPlayerConfig.mouseSensitivity).toBeGreaterThan(0);
