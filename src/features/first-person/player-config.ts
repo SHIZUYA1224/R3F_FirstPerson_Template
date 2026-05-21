@@ -39,7 +39,7 @@ export const defaultFirstPersonPlayerConfig: FirstPersonPlayerConfig = {
   gravity: -18,
   capsuleHalfHeight: 0.75,
   capsuleRadius: 0.35,
-  cameraYOffset: 0.45,
+  cameraYOffset: 0.25,
   mouseSensitivity: 0.0022,
   touchLookSensitivity: 0.0034,
   touchLookHoldScale: 8,
