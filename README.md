@@ -2,6 +2,75 @@
 
 Next.js App Router, React Three Fiber, and Rapier starter for walking through a 3D world in first person. The default world is `public/worlds/SILIQ.glb`.
 
+## fps-core
+
+Three.js向けの一人称FPS Coreです。
+
+```ts
+import { createFPSCore, createGroundOnlyCollision } from "@/fps-core";
+
+const core = createFPSCore({
+  camera,
+  domElement: renderer.domElement,
+  collision: createGroundOnlyCollision({ groundY: 0 }),
+  options: {
+    movement: {
+      walkSpeed: 5,
+      sprintSpeed: 8,
+      jumpSpeed: 6,
+      gravity: 20,
+    },
+    look: {
+      sensitivity: 0.002,
+      minPitch: -Math.PI / 2,
+      maxPitch: Math.PI / 2,
+    },
+    player: {
+      height: 1.7,
+      radius: 0.35,
+    },
+  },
+});
+
+function animate() {
+  const delta = clock.getDelta();
+  core.update(delta);
+  renderer.render(scene, camera);
+}
+```
+
+### Provides
+
+- Keyboard / mouse input
+- Pointer Lock
+- First-person camera
+- WASD movement
+- Jump
+- Gravity
+- Ground collision adapter
+- EventBus
+- Plugin system
+- Public FPSContext
+
+### Does Not Provide
+
+- UI
+- Weapons
+- Enemies
+- Models
+- Shaders
+- Sounds
+- Stages
+- Game rules
+- Scores
+- Inventory
+
+### Design Policy
+
+fps-core is a minimal control board for future FPS-related plugins.
+External systems must use FPSContext and EventBus.
+External systems must not mutate internal Core state directly.
+
 ## Quick Start
 
 ```bash
